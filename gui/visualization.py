@@ -1,16 +1,18 @@
+from tkinter import Toplevel, Button
 from simulator.environment import Environment
 from tkinter import *
-from math import fabs
+from tkinter import ttk
+from enum import Enum
+from math import fabs, floor
+from gui.elements import LabelledSelect
 from collections import deque
-from simulator.agent import Simulator
-from config.configuration import Configuration
 
 #Subclass of the tkinters Canvas object. Contains methods
 #for setting a graph model and drawing a graph, and changing
 #the vertices' colors.
 class PixelDisplay(Canvas):
-    cWi = 600
-    cHi = 300
+    cWi = 500
+    cHi = 500
 
     def __init__(self, parent):
         self.queue = deque([])
@@ -88,8 +90,7 @@ class PixelDisplay(Canvas):
     def translate_x(self, x):
         self.padding = 0
         x_norm = fabs(self.min_x) + x
-        #available_width = min(self.width, self.height)
-        available_width= self.width
+        available_width = min(self.width, self.height)
         x_screen = (self.padding/2) + x_norm*(float((available_width-self.padding)/self.w))
         return x_screen
 
@@ -143,103 +144,100 @@ class PixelDisplay(Canvas):
     def event(self, data):
         self.queue.append(data)
 
-class TrackerAgentDisplay(PixelDisplay):
+class FlatlandsDisplay(PixelDisplay):
 
-    def __init__(self, parent, width, height, wrap=True):
+    def __init__(self, parent):
         super().__init__(parent)
-        self.board_width = width
-        self.board_height = height
-        self.wrap = int(not wrap)
+        self.dim = 0
         self.bg = "#bbada0"
         self.empty_cell = "#ccc0b3"
-        self.set_dimension(self.board_width, self.board_height, 0, 0 )
-        self.draw_board()
 
     def draw_board(self):
         self.reset()
-        self.draw_pixel(0, 0, self.board_width, self.board_height, self.bg, tag="bg")
-        for i in range(self.board_width):
-            for j in range(self.board_height):
-                self.draw_rounded(i,j, 1, 1,  self.empty_cell, padding=1, line=self.bg, tags="bg")
+        self.draw_pixel(0, 0, self.model.width, self.model.height, self.bg, tag="bg")
+        for i in range(self.model.height):
+            for j in range(self.model.width):
+                self.draw_rounded(i,j, 1, 1,  self.empty_cell, padding=2, line=self.bg, tags="bg")
 
+    def set_scenario(self, scenario):
+        self.set_model(scenario)
+        #TODO: extract dim
+        self.set_dimension(scenario.width, scenario.height, 0, 0)
+        self.draw_board()
 
     def draw_model(self, timeslice):
+        #TODO: fix
         if timeslice:
-            timestep, score, tracker, sensor, pull, object = timeslice
+            t, x,y,dir,b = timeslice
             self.delete("Piece")
-            #Draw tracker
-            x, y, dim = tracker
-            for i in range(dim):
-                #TODO: remove magic number
-                self.draw_piece("Piece", (x+i)%self.board_width, y, 1)
-                if sensor[i+self.wrap]:
-                    self.draw_piece("Piece", (x+i)%self.board_width, y, 2)
-                if pull:
-                    self.draw_piece("Piece", (x+i)%self.board_width, y, 5)
+            for i in range(self.dim):
+                for j in range(self.dim):
+                    tile = b[i][j]
+                    if tile > 0:
+                        self.draw_piece("Piece", j, i, tile)
+            self.draw_piece("Piece", x,y, 3)
+            self.draw_direction("Piece", x, y, dir)
+            self.create_text(20, 20, font=("Arial",20), text=str(t+1), fill="white", tags="Piece")
 
-            #Draw object
-            x,y,dim = object
-            color = 3 + int(dim >=5)
-            for i in range(dim):
-                #TODO: remove magic number
-                self.draw_piece("Piece", x+i, y, color)
-            if pull:
-                x, y, dim = tracker
-                for i in range(dim):
-                    self.draw_piece("Piece", (x+i)%self.board_width, y, 5)
+    def draw_direction(self,id,  tx, ty ,dir):
+        x = self.translate_x(tx)
+        y = self.translate_y(ty)
+        x2 = self.translate_x(tx+1)
+        y2 = self.translate_y(ty+1)
 
-            capture, avoidance, failure_capture, failure_avoidance,speed, edge, pull = score
-            self.create_text(20, 20, font=("Arial",20), text=str(timestep+1), fill="white", tags="Piece")
-            self.create_text(80, 20, font=("Arial",20), text="C: " +str(capture), fill="white", tags="Piece")
-            self.create_text(140, 20, font=("Arial",20), text="A:" +str(avoidance), fill="white", tags="Piece")
-            self.create_text(220, 20, font=("Arial",20), text="CF:" +str(failure_capture), fill="white", tags="Piece")
-            self.create_text(300, 20, font=("Arial",20), text="AF:" +str(failure_avoidance), fill="white", tags="Piece")
-
+        if dir == Environment.WEST:
+            self.create_line(x, (y+y2)/2,(x+x2)/2 ,(y+y2)/2, tags=id, fill="#F5C60A", width=3)
+        elif dir == Environment.NORTH:
+            self.create_line((x+x2)/2, y,(x+x2)/2 ,(y+y2)/2, tags=id, fill="#F5C60A", width=3)
+        elif dir == Environment.SOUTH:
+            self.create_line((x+x2)/2, y2,(x+x2)/2 ,(y+y2)/2, tags=id, fill="#F5C60A", width=3)
+        else:
+            self.create_line((x+x2)/2, (y+y2)/2, x2 ,(y+y2)/2, tags=id, fill="#F5C60A", width=3)
 
     def draw_piece(self, piece_id, x, y, piece_type):
-        self.draw_rounded(x,y, 1, 1,  self._get_color(piece_type), padding=1, line=self.bg, tags=piece_id)
+        self.draw_rounded(x,y, 1, 1,  self._get_color(piece_type), padding=8, line=self.bg, tags=piece_id)
         #self.draw_label( x,y, 1,1, str(piece_id), t=piece_id)
 
-
     def _get_color(self, type):
-        c = {1:"#3FB8AF", 2:"#83AF9B", 3:"green", 4: "red", 5:"yellow"}
+        c = {1:"green", 2:"red", 3:"blue"}
         return c.get(type)
 
-class ResultDialog(object):
-    '''
-    The tracker agent can be visualized by the resultDialog. The dialog consists of a pixel display, speed adjuster,
-    restart button, scenario list box and a new scenario button.
-    '''
-    def __init__(self, parent, individual, ann=None):
+'''class ResultDialog(object):
+
+    def __init__(self, parent, individual, scenarios, config):
+        self.config = config
         self.individual = individual
-        self.ann = ann
-        config = Configuration.get()
-        wrap=config["fitness"]["tracker"]["parameters"]["wrap"]
-        pull=config["fitness"]["tracker"]["parameters"]["pull"]
-        self.scenario = Simulator(wrap = wrap, pull = pull)
+        self.s = scenarios
+        #TODO: Generate a new scenario. But what to do for static?
+        self.dim = self.config["fitness"]["flatlands"]["parameters"]["grid_dimension"]
+        dynamic = self.config["fitness"]["flatlands"]["parameters"]["dynamic"]
+        if dynamic:
+            self.scenarios = [Environment(self.dim)]
+            self.current = self.scenarios[0]
+        else:
+            self.scenarios = scenarios
+            self.current = self.scenarios[0]
 
         top = self.top = Toplevel(parent)
-        top.title("Tracker game - results wrap=" + str(wrap) + " pull=" + str(pull))
+        top.title("Flatlands - results")
         top.grid()
-
-        w = 30
-        h = 15
-
-        self.canvas = TrackerAgentDisplay(top, w, h, wrap=wrap)
-        self.canvas.set_model(self.scenario)
-        self.canvas.grid(row=0, column=0, columnspan=5, sticky=(N,W,S,E) ,padx=4, pady=4)
+        self.canvas = FlatlandsDisplay(top, self.dim)
+        self.canvas.set_model(self.current)
+        self.canvas.grid(row=0, column=0, columnspan=5, sticky=N ,padx=4, pady=4)
 
         self.v = StringVar()
-        speed_adjuster = Scale(top, from_=10, to=1000, command=self.set_speed,orient=HORIZONTAL, variable=self.v)
+        speed_adjuster = Scale(top, from_=200, to=1000, command=self.set_speed,orient=HORIZONTAL, variable=self.v)
         speed_adjuster.set(400)
         speed_adjuster.grid(row=1, column=0,padx=4, pady=4)
+
+        self.scenario_select = LabelledSelect(top, list(range(len(self.scenarios)+1)), "Scenario", command=self.change_scenario)
+        self.scenario_select.grid(row=1, column=1,padx=4, pady=4)
 
         restart_button = Button(top, text="Restart", command=self.reset)
         restart_button.grid(row=1, column=4,padx=4, pady=4)
 
-        new_button = Button(top, text="New recording", command=self.restart)
-        new_button.grid(row=1, column=3,padx=4, pady=4)
-
+        new_button = Button(top, text="New scenario", command=self.new_scenario)
+        new_button.grid(row=1, column=2,padx=4, pady=4)
 
         finish_button = Button(top, text="OK", command=self.ok)
         finish_button.grid(row=2, column=4,padx=4, pady=10)
@@ -251,26 +249,33 @@ class ResultDialog(object):
         self.canvas.set_queue(self.recording)
         self.canvas.start()
 
-    def restart(self):
-        self.canvas.stop()
-        self.record_agent()
-        self.reset()
 
     def set_speed(self, *args):
         self.canvas.set_rate(int(self.v.get()))
 
+    def new_scenario(self):
+        self.scenarios.append(Environment(self.dim))
+        self.scenario_select.add_option(len(self.scenarios))
+        self.canvas.stop()
+        self.change_scenario(len(self.scenarios))
+
+    def change_scenario(self, picked):
+        print(picked)
+        self.current = self.scenarios[picked-1]
+        self.canvas.set_model(self.current)
+        self.canvas.stop()
+        self.record_agent()
+
+
     def record_agent(self):
-        p = self.individual.phenotype_container
-        self.scenario.set(p)
-        if self.ann:
-            self.scenario.agent = self.ann
-        self.scenario.run(p, rec=True)
-
-
-        self.recording = self.scenario.get_recording()
+        p = self.individual.phenotype_container.get_ANN()
+        self.current.score_agent(p, 60)
+        self.recording = self.current.get_recording()
+        print(self.recording)
         self.canvas.set_queue(self.recording)
         self.canvas.start()
 
     def ok(self):
 
         self.top.destroy()
+'''

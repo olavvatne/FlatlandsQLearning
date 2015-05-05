@@ -4,7 +4,8 @@ import numpy as np
 class Environment:
     EMPTY = 0
     FOOD = 1
-    POISON = 2
+    POISON = -1
+    PLAYER = -2
 
     NORTH = 0
     EAST = 1
@@ -14,21 +15,35 @@ class Environment:
     MOVE_FORWARD = 0
     MOVE_LEFT = 1
     MOVE_RIGHT = 2
+    #TODO: fix directionality
+    MOVE_DOWN = 3
 
-    def __init__(self, dim, f_prob=0.333, p_prob=0.333, agent_start_pos=(5,5)):
-        #F_prob of a cell being filled with food, and p_prob that a remaining empty cell
-        #is filled with poisoon
-        probabilites = [1-f_prob-(f_prob*(1-p_prob)), f_prob, f_prob*(1-p_prob)]
-        self.board = np.random.choice(3, replace=True, p=probabilites, size=(dim, dim))
-        self.agent_x = agent_start_pos[1]
-        self.agent_y = agent_start_pos[0]
+    def __init__(self, file=None):
+        if file:
+            self.create_environment(file)
+        self.board = []
+        self.agent_x = 0
+        self.agent_y = 0
         self.agent_dir = Environment.NORTH
         self.recording = []
         self.poison = 0
         self.food = 0
-        self.dim = dim
-        self.board[self.agent_y, self.agent_x] = Environment.EMPTY
-        #Food and poision removed from agent's start position
+
+    def create_environment(self, file):
+        f = open(file, "r")
+        board_description = [int(v) for v in f.readline().split()]
+        w, h, x,y,n = board_description
+        self.width = w
+        self.height = h
+        self.agent_x = x
+        self.agent_y = y
+        self.food_number = n
+        self.board = []
+        for i in range(h):
+            self.board.append([int(c) for c in f.readline().split()])
+
+        print(self.board)
+
 
     def init_scoring(self):
         b = np.empty_like (self.board)
