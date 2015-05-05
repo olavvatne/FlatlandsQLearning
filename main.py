@@ -2,8 +2,10 @@ from tkinter import *
 from tkinter import ttk
 import threading
 
+from gui.elements import LabelledSelect
 from gui.visualization import FlatlandsDisplay
 from simulator.environment import Environment
+import os
 import cProfile
 
 class AppUI(Frame):
@@ -28,25 +30,23 @@ class AppUI(Frame):
         master.bind("<Control-r>", lambda event: run_pressed())
         menu.add_command(label="Stop", command=lambda: stop_pressed(), accelerator="Ctrl+S")
         master.bind("<Control-s>", lambda event: stop_pressed())
-        menu.add_command(label="Load", command=lambda: load_temp_file(), accelerator="Ctrl+L")
-        master.bind("<Control-l>", lambda event: load_temp_file())
+
 
         def run_pressed():
             run()
 
-        def load_temp_file():
-            load_file("ttt")
 
         def stop_pressed():
             stop()
-
 
         try:
             self.master.config(menu=self.menubar)
         except AttributeError:
             self.master.tk.call(master, "config", "-menu", self.menubar)
 
-
+        options = get_file_listing()
+        self.file_selector = LabelledSelect(self, options, "Flatlands scenario", command=load_file)
+        self.file_selector.grid(row=0, column=0, sticky=N+S+E+W, padx=4, pady=4)
         self.canvas = FlatlandsDisplay(self)
         self.canvas.grid(row=1, column=0, sticky=N+S+E+W ,padx=4, pady=4)
 
@@ -54,9 +54,6 @@ class AppUI(Frame):
         self.rowconfigure(1, weight=1)
         self.canvas.bind("<Configure>", self.canvas.on_resize)
         self.canvas.addtag_all("all")
-
-
-
 
 
 def stop(*args):
@@ -69,14 +66,12 @@ def run(*args):
 
     def callback():
         pass
-
-
     t = threading.Thread(target=callback)
     t.daemon = True
     t.start()
 
 def load_file(filename):
-    filename = "files/5-even-bigger.txt"
+    filename = "files/" + filename
     scenario = Environment(file=filename)
     app.canvas.set_scenario(scenario)
 
@@ -86,11 +81,18 @@ def on_exit(*args):
     '''
     root.quit()
 
+def get_file_listing():
+    return os.listdir("files")
+
+
 
 root = Tk()
 app = AppUI(master=root)
 root.bind('<Return>', run)
 
+scenarios = get_file_listing()
+if len(scenarios)>0:
+    load_file(scenarios[0])
 #TODO: load flatlands file
 #TODO: init q-learner
 #TODO: visualize results

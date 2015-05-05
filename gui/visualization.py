@@ -162,8 +162,6 @@ class PixelDisplay(Canvas):
     def on_resize(self,event):
         wscale = float(event.width)/self.width
         hscale = float(event.height)/self.height
-        print("W", wscale)
-        print("H", hscale)
         self.width = event.width
         self.height = event.height
         self.padding = int(self.width/64)
@@ -184,15 +182,15 @@ class FlatlandsDisplay(PixelDisplay):
         self.empty_cell = "#ccc0b3"
 
     def draw_board(self):
-        self.reset()
-        self.draw_pixel(0, 0, self.model.width, self.model.height, self.bg, tag="bg")
-        for i in range(self.model.height):
-            for j in range(self.model.width):
-                self.draw_rounded(j,i, 1, 1,  self.empty_cell, padding=1, line=self.bg, tags="bg")
-        self.draw_pieces(self.model.board)
+        if self.model:
+            self.reset()
+            self.draw_pixel(0, 0, self.model.width, self.model.height, self.bg, tag="bg")
+            for i in range(self.model.height):
+                for j in range(self.model.width):
+                    self.draw_rounded(j,i, 1, 1,  self.empty_cell, padding=1, line=self.bg, tags="bg")
+            self.draw_pieces(self.model.board)
 
     def set_scenario(self, scenario):
-        print(scenario.board)
         self.set_model(scenario)
         self.set_dimension(scenario.width, scenario.height, 0, 0)
         self.draw_board()
@@ -208,13 +206,11 @@ class FlatlandsDisplay(PixelDisplay):
         self.draw_board()
 
     def draw_pieces(self, board):
-        print(board)
         self.delete("Piece")
         for i in range(len(board)):
             for j in range(len(board[0])):
                 tile = board[i][j]
                 if tile != 0:
-                    print(tile)
                     self.draw_piece("Piece", j, i, tile)
 
 
