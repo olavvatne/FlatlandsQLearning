@@ -88,18 +88,29 @@ class PixelDisplay(Canvas):
 
     #The actual x position of the graph element on screen
     def translate_x(self, x):
-        self.padding = 0
+
+
+        if self.width/self.w < self.height/self.h:
+            mpixels= self.width
+            m = self.w
+        else:
+            mpixels= self.height
+            m = self.h
+
         x_norm = fabs(self.min_x) + x
-        available_width = min(self.width, self.height)
-        x_screen = (self.padding/2) + x_norm*(float((available_width-self.padding)/self.w))
+        x_screen =  x_norm*(float((mpixels)/m))
         return x_screen
 
     #The actual y position of the graph element on screen
     def translate_y(self, y):
-        self.padding = 0
-        available_height= min(self.width, self.height)
+        if self.width/self.w < self.height/self.h:
+            mpixels= self.width
+            m = self.w
+        else:
+            mpixels= self.height
+            m = self.h
         y_norm = fabs(self.min_y) + y
-        y_screen = (self.padding/2) + y_norm*(float((available_height-self.padding)/self.h))
+        y_screen =  y_norm*(float((mpixels)/m))
         return y_screen
 
     def reset(self):
@@ -132,6 +143,8 @@ class PixelDisplay(Canvas):
     def set_dimension(self, max_x, max_y, min_x, min_y):
         self.w = fabs(min_x) + max_x
         self.h = fabs(min_y) + max_y
+        #self.h = max(self.w, self.h)
+        #self.w = self.h
         self.max_x = max_x
         self.max_y = max_y
         self.min_y = min_y
@@ -141,14 +154,32 @@ class PixelDisplay(Canvas):
         self.queue.clear()
         self.queue.extend(data)
 
+    def scale_draw(self):
+        pass
     def event(self, data):
         self.queue.append(data)
+
+    def on_resize(self,event):
+        wscale = float(event.width)/self.width
+        hscale = float(event.height)/self.height
+        print("W", wscale)
+        print("H", hscale)
+        self.width = event.width
+        self.height = event.height
+        self.padding = int(self.width/64)
+        #if event.width/self.w > event.height/self.h:
+        #    scale = hscale
+        #else:
+        #    scale = wscale
+        self.config(width=self.width, height=self.height)
+        #self.scale("all",0,0,scale,scale)
+        self.scale_draw()
 
 class FlatlandsDisplay(PixelDisplay):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.dim = 0
+
         self.bg = "#bbada0"
         self.empty_cell = "#ccc0b3"
 
@@ -157,11 +188,12 @@ class FlatlandsDisplay(PixelDisplay):
         self.draw_pixel(0, 0, self.model.width, self.model.height, self.bg, tag="bg")
         for i in range(self.model.height):
             for j in range(self.model.width):
-                self.draw_rounded(i,j, 1, 1,  self.empty_cell, padding=2, line=self.bg, tags="bg")
+                self.draw_rounded(j,i, 1, 1,  self.empty_cell, padding=1, line=self.bg, tags="bg")
+        self.draw_pieces(self.model.board)
 
     def set_scenario(self, scenario):
+        print(scenario.board)
         self.set_model(scenario)
-        #TODO: extract dim
         self.set_dimension(scenario.width, scenario.height, 0, 0)
         self.draw_board()
 
@@ -169,37 +201,32 @@ class FlatlandsDisplay(PixelDisplay):
         #TODO: fix
         if timeslice:
             t, x,y,dir,b = timeslice
-            self.delete("Piece")
-            for i in range(self.dim):
-                for j in range(self.dim):
-                    tile = b[i][j]
-                    if tile > 0:
-                        self.draw_piece("Piece", j, i, tile)
-            self.draw_piece("Piece", x,y, 3)
-            self.draw_direction("Piece", x, y, dir)
+            self.draw_pieces(b)
             self.create_text(20, 20, font=("Arial",20), text=str(t+1), fill="white", tags="Piece")
 
-    def draw_direction(self,id,  tx, ty ,dir):
-        x = self.translate_x(tx)
-        y = self.translate_y(ty)
-        x2 = self.translate_x(tx+1)
-        y2 = self.translate_y(ty+1)
+    def scale_draw(self):
+        self.draw_board()
 
-        if dir == Environment.WEST:
-            self.create_line(x, (y+y2)/2,(x+x2)/2 ,(y+y2)/2, tags=id, fill="#F5C60A", width=3)
-        elif dir == Environment.NORTH:
-            self.create_line((x+x2)/2, y,(x+x2)/2 ,(y+y2)/2, tags=id, fill="#F5C60A", width=3)
-        elif dir == Environment.SOUTH:
-            self.create_line((x+x2)/2, y2,(x+x2)/2 ,(y+y2)/2, tags=id, fill="#F5C60A", width=3)
-        else:
-            self.create_line((x+x2)/2, (y+y2)/2, x2 ,(y+y2)/2, tags=id, fill="#F5C60A", width=3)
+    def draw_pieces(self, board):
+        print(board)
+        self.delete("Piece")
+        for i in range(len(board)):
+            for j in range(len(board[0])):
+                tile = board[i][j]
+                if tile != 0:
+                    print(tile)
+                    self.draw_piece("Piece", j, i, tile)
+
+
 
     def draw_piece(self, piece_id, x, y, piece_type):
-        self.draw_rounded(x,y, 1, 1,  self._get_color(piece_type), padding=8, line=self.bg, tags=piece_id)
+        self.draw_rounded(x,y, 1, 1,  self._get_color(piece_type), padding=2, line=self.bg, tags=piece_id)
         #self.draw_label( x,y, 1,1, str(piece_id), t=piece_id)
 
     def _get_color(self, type):
-        c = {1:"green", 2:"red", 3:"blue"}
+        c = {-2:"blue", -1:"red"}
+        if type not in c:
+            return "green"
         return c.get(type)
 
 '''class ResultDialog(object):

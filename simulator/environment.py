@@ -19,9 +19,9 @@ class Environment:
     MOVE_DOWN = 3
 
     def __init__(self, file=None):
+        self.board = []
         if file:
             self.create_environment(file)
-        self.board = []
         self.agent_x = 0
         self.agent_y = 0
         self.agent_dir = Environment.NORTH

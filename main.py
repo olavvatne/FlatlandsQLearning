@@ -48,10 +48,12 @@ class AppUI(Frame):
 
 
         self.canvas = FlatlandsDisplay(self)
-        self.canvas.grid(row=0, column=0, columnspan=5, sticky=N ,padx=4, pady=4)
-        self.test = Label(self, text="Test: ")
-        self.test.grid(row=0, column=1, sticky=W ,padx=2, pady=4)
-        self.columnconfigure(0, minsize="150")
+        self.canvas.grid(row=1, column=0, sticky=N+S+E+W ,padx=4, pady=4)
+
+        self.columnconfigure(0, minsize="150", weight=1)
+        self.rowconfigure(1, weight=1)
+        self.canvas.bind("<Configure>", self.canvas.on_resize)
+        self.canvas.addtag_all("all")
 
 
 
@@ -74,7 +76,7 @@ def run(*args):
     t.start()
 
 def load_file(filename):
-    filename = "files/1-simple.txt"
+    filename = "files/5-even-bigger.txt"
     scenario = Environment(file=filename)
     app.canvas.set_scenario(scenario)
 
