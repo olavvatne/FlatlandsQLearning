@@ -212,6 +212,8 @@ class FlatlandsDisplay(PixelDisplay):
                 tile = board[i][j]
                 if tile != 0:
                     self.draw_piece("Piece", j, i, tile)
+                    if tile>0:
+                        self.create_text(self.translate_x(j + 0.5), self.translate_y(i + 0.5), font=("Arial",int(self.width/self.w*0.5)), text=str(tile), fill="white", tags="Piece")
 
 
 

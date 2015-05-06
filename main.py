@@ -5,6 +5,7 @@ import threading
 from gui.elements import LabelledSelect
 from gui.visualization import FlatlandsDisplay
 from simulator.environment import Environment
+from learner.q import QLearning
 import os
 import cProfile
 
@@ -19,6 +20,7 @@ class AppUI(Frame):
         Frame.__init__(self, master, relief=SUNKEN, bd=2, highlightthickness=0)
         self.grid(sticky=N+S+E+W)
 
+        #Menu
         self.menubar = Menu(self)
         menu = Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="File", menu=menu)
@@ -44,14 +46,18 @@ class AppUI(Frame):
         except AttributeError:
             self.master.tk.call(master, "config", "-menu", self.menubar)
 
+        #Elements
         options = get_file_listing()
         self.file_selector = LabelledSelect(self, options, "Flatlands scenario", command=load_file)
         self.file_selector.grid(row=0, column=0, sticky=N+S+E+W, padx=4, pady=4)
         self.canvas = FlatlandsDisplay(self)
         self.canvas.grid(row=1, column=0, sticky=N+S+E+W ,padx=4, pady=4)
 
+        #Layout behavior
         self.columnconfigure(0, minsize="150", weight=1)
         self.rowconfigure(1, weight=1)
+
+        #Resize behavior
         self.canvas.bind("<Configure>", self.canvas.on_resize)
         self.canvas.addtag_all("all")
 
@@ -63,9 +69,9 @@ def stop(*args):
 
 def run(*args):
     #TODO: do Q-learning stuff
-
+    l = QLearning()
     def callback():
-        pass
+        l.learn(scenario)
     t = threading.Thread(target=callback)
     t.daemon = True
     t.start()
@@ -76,24 +82,19 @@ def load_file(filename):
     app.canvas.set_scenario(scenario)
 
 def on_exit(*args):
-    '''
-    Exits application
-    '''
     root.quit()
 
 def get_file_listing():
     return os.listdir("files")
 
-
-
 root = Tk()
 app = AppUI(master=root)
 root.bind('<Return>', run)
-
+scenario = None
 scenarios = get_file_listing()
 if len(scenarios)>0:
     load_file(scenarios[0])
-#TODO: load flatlands file
+
 #TODO: init q-learner
 #TODO: visualize results
 root.mainloop()

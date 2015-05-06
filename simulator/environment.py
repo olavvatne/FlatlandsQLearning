@@ -1,5 +1,5 @@
 import numpy as np
-
+import copy
 
 class Environment:
     EMPTY = 0
@@ -24,7 +24,6 @@ class Environment:
             self.create_environment(file)
         self.agent_x = 0
         self.agent_y = 0
-        self.agent_dir = Environment.NORTH
         self.recording = []
         self.poison = 0
         self.food = 0
@@ -37,12 +36,14 @@ class Environment:
         self.height = h
         self.agent_x = x
         self.agent_y = y
+
         self.food_number = n
         self.board = []
         for i in range(h):
             self.board.append([int(c) for c in f.readline().split()])
-
-        print(self.board)
+        self.bc = copy.deepcopy(self.board)
+        self.bc_x = x
+        self.bc_y = y
 
 
     def init_scoring(self):
@@ -57,12 +58,21 @@ class Environment:
         dir = self.agent_dir
         return b, y, x, dir
 
-    def score_agent(self, agent, timesteps=60):
+    def restart(self):
+        self.board = copy.deepcopy(self.bc)
+        self.agent_x = self.bc_x
+        self.agent_y = self.bc_y
+        self.food_left = self.food_number
+        self.food = 0
+        self.poison = 0
+
+    '''def score_agent(self, agent):
+        #TODO: No timesteps, apparently
         b, y, x, dir = self.init_scoring()
         #print("SCORE ------------------------------------")
-        #TODO: Create a record method? And not dilute score agent
-        self.recording = []
 
+        self.recording = []
+        timesteps=60
         for i in range(timesteps):
 
             #Senor gathering
@@ -89,7 +99,8 @@ class Environment:
                 y,x,dir = self._move_agent(y, x, (dir+m)%4, b)
         #print("Score: ", self.food, self.poison)
         return (self.food, self.poison)
-
+    '''
+    '''
     def get_recording(self):
         b = np.empty_like (self.board)
         b[:] = self.board
@@ -100,46 +111,34 @@ class Environment:
             rec.append((i,x,y, dir, a))
             self._move_agent(y,x, dir, b)
         return rec
-
-    def _move_agent(self, y,x, dir, b):
-        #print("dir", dir)
-        if dir == Environment.NORTH:
-            y = (y-1)%self.dim
-        elif dir == Environment.EAST:
-             x = (x+1)%self.dim
-        elif dir == Environment.SOUTH:
-            y = (y+1)%self.dim
+    '''
+    def move_agent(self, action):
+        x = self.agent_x
+        y = self.agent_y
+        print(x, y)
+        self.board[y][x] = Environment.EMPTY
+        if action == Environment.NORTH:
+            y = (y-1)%self.height
+        elif action == Environment.EAST:
+             x = (x+1)%self.width
+        elif action == Environment.SOUTH:
+            y = (y+1)%self.height
         else:
-            x = (x-1)%self.dim
+            x = (x-1)%self.width
 
-        content = b[y][x]
-        if content == Environment.FOOD:
+        self.agent_x = x
+        self.agent_y = y
+        content = self.board[y][x]
+        reward = 0
+        if content >= Environment.FOOD:
             self.food += 1
+            self.food_left -= 1
+            reward = 1
         elif content == Environment.POISON:
             self.poison += 1
-        b[y][x] = Environment.EMPTY
-        return (y, x, dir)
-
-
-    def _get_sensor_data(self, y,x, dir, b,type):
-        dim = len(b)
-        if dir == Environment.NORTH:
-            data = [b[y][(x-1)%dim] == type,
-                    b[(y-1)%dim][x] == type,
-                    b[y][(x+1)%dim] == type]
-        elif dir == Environment.EAST:
-            data = [b[(y-1)%dim][x] == type,
-                    b[y][(x+1)%dim] == type,
-                    b[(y+1)%dim][x]== type]
-        elif dir == Environment.SOUTH:
-            data = [b[y][(x+1)%dim] == type,
-                    b[(y+1)%dim][x] == type,
-                    b[y][(x-1)%dim]== type]
-        else:
-            data = [b[(y+1)%dim][x] == type,
-                    b[y][(x-1)%dim] == type,
-                    b[(y-1)%dim][x]== type]
-        return data
+            reward = -1
+        self.board[y][x] = Environment.PLAYER
+        return reward
 
 
     def __repr__(self):
