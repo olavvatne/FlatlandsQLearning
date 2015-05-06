@@ -79,12 +79,14 @@ class PixelDisplay(Canvas):
         pass
 
     def start(self):
+        self.stop()
         self.stopped = False
         self.draw()
 
     def stop(self):
-        self.after_cancel(self._callback_id)
         self.stopped = True
+        if self._callback_id:
+            self.after_cancel(self._callback_id)
 
     #The actual x position of the graph element on screen
     def translate_x(self, x):
@@ -198,9 +200,10 @@ class FlatlandsDisplay(PixelDisplay):
     def draw_model(self, timeslice):
         #TODO: fix
         if timeslice:
-            t, x,y,dir,b = timeslice
+            b, f, m = timeslice
             self.draw_pieces(b)
-            self.create_text(20, 20, font=("Arial",20), text=str(t+1), fill="white", tags="Piece")
+            self.draw_arrows(m)
+            self.create_text(20, 20, font=("Arial",20), text=str(f), fill="white", tags="Piece")
 
     def scale_draw(self):
         self.draw_board()
@@ -215,16 +218,25 @@ class FlatlandsDisplay(PixelDisplay):
                     if tile>0:
                         self.create_text(self.translate_x(j + 0.5), self.translate_y(i + 0.5), font=("Arial",int(self.width/self.w*0.5)), text=str(tile), fill="white", tags="Piece")
 
-
+    def draw_arrows(self, map):
+        self.delete("Arrows")
+        for i in range(len(map)):
+            for j in range(len(map[0])):
+                tile = self._get_arrow(map[i][j])
+                self.create_text(self.translate_x(j + 0.5), self.translate_y(i + 0.5), font=("Arial",int(self.width/self.w*0.5)), text=str(tile), fill="white", tags="Piece")
 
     def draw_piece(self, piece_id, x, y, piece_type):
         self.draw_rounded(x,y, 1, 1,  self._get_color(piece_type), padding=2, line=self.bg, tags=piece_id)
         #self.draw_label( x,y, 1,1, str(piece_id), t=piece_id)
 
     def _get_color(self, type):
-        c = {-2:"blue", -1:"red"}
+        c = {-2:"blue", -1:"red", -3: "orange"}
         if type not in c:
             return "green"
+        return c.get(type)
+
+    def _get_arrow(self, type):
+        c = {0:"↑", 1:"→", 2:"↓", 3: "←"}
         return c.get(type)
 
 '''class ResultDialog(object):

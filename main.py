@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter import ttk
 import threading
 
-from gui.elements import LabelledSelect
+from gui.elements import LabelledSelect, LabelledEntry
 from gui.visualization import FlatlandsDisplay
 from simulator.environment import Environment
 from learner.q import QLearning
@@ -50,8 +50,10 @@ class AppUI(Frame):
         options = get_file_listing()
         self.file_selector = LabelledSelect(self, options, "Flatlands scenario", command=load_file)
         self.file_selector.grid(row=0, column=0, sticky=N+S+E+W, padx=4, pady=4)
+        self.iteration_entry = LabelledEntry(self, "Iterations", 100)
+        self.iteration_entry.grid(row=0, column=1, padx=4, pady=4)
         self.canvas = FlatlandsDisplay(self)
-        self.canvas.grid(row=1, column=0, sticky=N+S+E+W ,padx=4, pady=4)
+        self.canvas.grid(row=1, column=0,columnspan=2, sticky=N+S+E+W ,padx=4, pady=4)
 
         #Layout behavior
         self.columnconfigure(0, minsize="150", weight=1)
@@ -63,20 +65,25 @@ class AppUI(Frame):
 
 
 def stop(*args):
-    #TODO: stop Q-learner
-    pass
+    app.canvas.stop()
+    q.stopped = True
 
 
 def run(*args):
     #TODO: do Q-learning stuff
-    l = QLearning()
+
     def callback():
-        l.learn(scenario)
+        #TODO: messy
+        q.learn(app.canvas.model, k=app.iteration_entry.get())
+        recording = q.test(app.canvas.model)
+        app.canvas.set_queue(recording)
+        app.canvas.start()
     t = threading.Thread(target=callback)
     t.daemon = True
     t.start()
 
 def load_file(filename):
+    stop()
     filename = "files/" + filename
     scenario = Environment(file=filename)
     app.canvas.set_scenario(scenario)
@@ -90,7 +97,7 @@ def get_file_listing():
 root = Tk()
 app = AppUI(master=root)
 root.bind('<Return>', run)
-scenario = None
+q = QLearning()
 scenarios = get_file_listing()
 if len(scenarios)>0:
     load_file(scenarios[0])
