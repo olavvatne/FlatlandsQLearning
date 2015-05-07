@@ -3,14 +3,26 @@ import itertools
 import numpy as np
 import random
 class QLearning:
+    LEARNING_RATE = 0.05
+    DISCOUNT_FACTOR = 0.6
+    ELIGIBILITY_TRACE = 0.9
 
-    def __init__(self):
-        self.discount_factor = 0.5
-        self.learning_rate = 0.1
-        self.eligbility_trace = .8
+    def __init__(self, l=LEARNING_RATE, d=DISCOUNT_FACTOR, e= ELIGIBILITY_TRACE):
+        self.discount_factor = d
+        self.learning_rate = l
+        self.eligibility_trace = e
+        self.max_tail = 10
         self.stopped = False
         self.q = {}
         self.e = {}
+
+    def config(self, l=None, d=None, e=None):
+        if l:
+            self.learning_rate = l
+        if d:
+            self.discount_factor = d
+        if e:
+            self.eligibility_trace = e
 
     def learn(self, scenario, k=100):
         self.stopped = False
@@ -19,7 +31,7 @@ class QLearning:
         self._create_EQ(scenario)
         for i in range(k):
             scenario.restart()
-            self.visited = {}
+            self._create_tail()
             self.t = 1  - (i/k)
             print("ITERATION", i)
             #TODO: go back to start, so food left not enough. Also put in reward for going back at the end.
@@ -28,12 +40,11 @@ class QLearning:
                 a = self._select_action(s)
                 r = scenario.update(a)
                 new_s = self.get_state(scenario.agent_x, scenario.agent_y, scenario.food)
-                self.visited[new_s] = True
+                self._add_tail(s,a)
                 self._update_E(s, a)
                 self._update_Q(s,new_s, a,r)
 
     def test(self, scenario):
-
         scenario.restart()
         recording = []
         max_steps = scenario.width*scenario.height
@@ -53,6 +64,16 @@ class QLearning:
 
         return recording
 
+    def _create_tail(self):
+        self.visited = []
+
+    def _add_tail(self, s, a):
+        if len(self.visited) > self.max_tail:
+            self.visited.sort(key=lambda k: self.e[k[0]][k[1]], reverse=True)
+            ds, da = self.visited.pop()
+            self.e[ds][da] = 0
+        self.visited.append((s,a))
+
     def _create_action_map(self, board, n):
         map = []
         for i in range(len(board)):
@@ -67,9 +88,8 @@ class QLearning:
         #d = r + (self.discount_factor*max(self.q[ns])) - self.q[s][a]
         #self.q[s][a] +=  (self.learning_rate*d)
         d = r + (self.discount_factor*max(self.q[ns])) - self.q[s][a]
-        for k in self.visited.keys():
-            for i in range(len(self.e[k])):
-                self.q[k][i] += self.learning_rate*d*self.e[k][i]
+        for k, i in self.visited:
+            self.q[k][i] += self.learning_rate*d*self.e[k][i]
 
     def _get_best_action(self,s ):
         return max(list(enumerate(self.q[s])), key=lambda k: k[1])[0]
@@ -98,14 +118,10 @@ class QLearning:
         return self.q[s][a]
 
     def _update_E(self, s, a):
-        for k in self.visited.keys():
-            for i in range(len(self.e[k])):
-                self.e[k][i] = self.discount_factor*self.eligbility_trace*self.e[k][i]
+        for si, ai in self.visited:
+            self.e[si][ai] = self.discount_factor*self.eligibility_trace*self.e[si][ai]
         self.e[s][a] += 1
-        #for k in self.visited.keys():
-        #    for i in range(len(self.e[k])):
-        #        if self.e[k][a] == 0:
-        #            del self.visited[k]
+
 
     def _create_EQ(self, scenario):
         self.q = {}

@@ -51,13 +51,25 @@ class AppUI(Frame):
         self.file_selector = LabelledSelect(self, options, "Flatlands scenario", command=load_file)
         self.file_selector.grid(row=0, column=0, sticky=N+S+E+W, padx=4, pady=4)
         self.iteration_entry = LabelledEntry(self, "Iterations", 100)
-        self.iteration_entry.grid(row=0, column=1, padx=4, pady=4)
+        self.iteration_entry.grid(row=0, column=2, padx=4, pady=4)
+
+        self.learning_rate = LabelledEntry(self, "Learning", 0.01)
+        self.learning_rate.grid(row=1, column=0, padx=4, pady=4)
+
+        self.discount = LabelledEntry(self, "Discount", 0.6)
+        self.discount.grid(row=1, column=1, padx=4, pady=4)
+
+        self.eligibility = LabelledEntry(self, "Eligibility", 0.9)
+        self.eligibility.grid(row=1, column=2, padx=4, pady=4)
+
         self.canvas = FlatlandsDisplay(self)
-        self.canvas.grid(row=1, column=0,columnspan=2, sticky=N+S+E+W ,padx=4, pady=4)
+        self.canvas.grid(row=2, column=0,columnspan=3, sticky=N+S+E+W ,padx=4, pady=4)
 
         #Layout behavior
-        self.columnconfigure(0, minsize="150", weight=1)
-        self.rowconfigure(1, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2,  weight=1)
+        self.rowconfigure(2, weight=1)
 
         #Resize behavior
         self.canvas.bind("<Configure>", self.canvas.on_resize)
@@ -71,7 +83,7 @@ def stop(*args):
 
 def run(*args):
     #TODO: do Q-learning stuff
-
+    q.config(app.learning_rate.get(), app.discount.get(), app.eligibility.get())
     def callback():
         #TODO: messy
         q.learn(app.canvas.model, k=app.iteration_entry.get())

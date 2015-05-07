@@ -72,12 +72,12 @@ class Environment:
             self.food += 1
             self.food_left -= 1
             #TODO:Force order to find bug
-            reward = 3
+            reward = 4
         elif content == Environment.POISON:
             self.poison += 1
-            reward = -2
+            reward = -3
         elif content == Environment.GOAL:
-            reward = 3
+            reward = 4
         return reward
 
     def _move_agent(self, action):
