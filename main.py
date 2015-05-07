@@ -82,10 +82,10 @@ def stop(*args):
 
 
 def run(*args):
-    #TODO: do Q-learning stuff
+
     q.config(app.learning_rate.get(), app.discount.get(), app.eligibility.get())
     def callback():
-        #TODO: messy
+
         q.learn(app.canvas.model, k=app.iteration_entry.get())
         recording = q.test(app.canvas.model)
         app.canvas.set_queue(recording)

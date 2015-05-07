@@ -34,7 +34,6 @@ class QLearning:
             self._create_tail()
             self.t = 1  - (i/k)
             print("ITERATION", i)
-            #TODO: go back to start, so food left not enough. Also put in reward for going back at the end.
             while not scenario.is_goal() and not self.stopped:
                 s = self.get_state(scenario.agent_x, scenario.agent_y, scenario.food)
                 a = self._select_action(s)
@@ -49,20 +48,20 @@ class QLearning:
         recording = []
         max_steps = scenario.width*scenario.height
         for i in range(max_steps):
-            snapshot = scenario.take_snapshot()
-            snapshot.append(self._create_action_map(scenario.board, scenario.food))
-            #TODO: Action for each state.
-            recording.append(snapshot)
+            recording.append(self._gui_snapshot(scenario))
             s = self.get_state(scenario.agent_x, scenario.agent_y, scenario.food)
             a = self._get_best_action(s)
             r = scenario.update(a)
             if scenario.is_goal():
                 break
+
+        recording.append(self._gui_snapshot(scenario))
+        return recording
+
+    def _gui_snapshot(self, scenario):
         snapshot = scenario.take_snapshot()
         snapshot.append(self._create_action_map(scenario.board, scenario.food))
-        recording.append(snapshot)
-
-        return recording
+        return snapshot
 
     def _create_tail(self):
         self.visited = []
