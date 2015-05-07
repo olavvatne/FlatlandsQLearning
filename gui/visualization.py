@@ -223,7 +223,7 @@ class FlatlandsDisplay(PixelDisplay):
         for i in range(len(map)):
             for j in range(len(map[0])):
                 tile = self._get_arrow(map[i][j])
-                self.create_text(self.translate_x(j + 0.5), self.translate_y(i + 0.5), font=("Arial",int(self.width/self.w*0.5)), text=str(tile), fill="white", tags="Piece")
+                self.create_text(self.translate_x(j + 0.5), self.translate_y(i + 0.5), font=("Arial",int(self.width/self.w*0.2)), text=str(tile), fill="white", tags="Piece")
 
     def draw_piece(self, piece_id, x, y, piece_type):
         self.draw_rounded(x,y, 1, 1,  self._get_color(piece_type), padding=2, line=self.bg, tags=piece_id)

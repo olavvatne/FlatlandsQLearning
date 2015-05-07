@@ -53,6 +53,9 @@ class AppUI(Frame):
         self.iteration_entry = LabelledEntry(self, "Iterations", 100)
         self.iteration_entry.grid(row=0, column=2, padx=4, pady=4)
 
+        button = Button(self, text="Run", command=run_pressed)
+        button.grid(row=0, column=3, columnspan=1, rowspan=2, padx = 4, pady=4, sticky=N+S+E+W)
+
         self.learning_rate = LabelledEntry(self, "Learning", 0.01)
         self.learning_rate.grid(row=1, column=0, padx=4, pady=4)
 
@@ -63,7 +66,7 @@ class AppUI(Frame):
         self.eligibility.grid(row=1, column=2, padx=4, pady=4)
 
         self.canvas = FlatlandsDisplay(self)
-        self.canvas.grid(row=2, column=0,columnspan=3, sticky=N+S+E+W ,padx=4, pady=4)
+        self.canvas.grid(row=2, column=0,columnspan=4, sticky=N+S+E+W ,padx=4, pady=4)
 
         #Layout behavior
         self.columnconfigure(0, weight=1)
@@ -82,10 +85,9 @@ def stop(*args):
 
 
 def run(*args):
-
-    q.config(app.learning_rate.get(), app.discount.get(), app.eligibility.get())
+    stop()
     def callback():
-
+        q.config(app.learning_rate.get(), app.discount.get(), app.eligibility.get())
         q.learn(app.canvas.model, k=app.iteration_entry.get())
         recording = q.test(app.canvas.model)
         app.canvas.set_queue(recording)
