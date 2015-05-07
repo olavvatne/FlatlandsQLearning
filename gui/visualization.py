@@ -15,6 +15,7 @@ class PixelDisplay(Canvas):
     cHi = 500
 
     def __init__(self, parent):
+        self.pd = 0
         self.queue = deque([])
         self.model = None
         self.width = self.cWi
@@ -24,7 +25,7 @@ class PixelDisplay(Canvas):
         self.offset = 1
         self.event_rate = 400
         self._callback_id = None
-        super().__init__(parent, bg='white', width=self.width, height=self.height, highlightthickness=0)
+        super().__init__(parent, bg='#1C3C4A', width=self.width, height=self.height, highlightthickness=0)
 
     def set_rate(self, n):
         self.event_rate = n
@@ -100,7 +101,7 @@ class PixelDisplay(Canvas):
             m = self.h
 
         x_norm = fabs(self.min_x) + x
-        x_screen =  x_norm*(float((mpixels)/m))
+        x_screen =  self.pd + x_norm*(float((mpixels)/m))
         return x_screen
 
     #The actual y position of the graph element on screen
@@ -151,6 +152,7 @@ class PixelDisplay(Canvas):
         self.max_y = max_y
         self.min_y = min_y
         self.min_x = min_x
+        self.set_pd()
 
     def set_queue(self, data):
         self.queue.clear()
@@ -160,6 +162,11 @@ class PixelDisplay(Canvas):
         pass
     def event(self, data):
         self.queue.append(data)
+
+    def set_pd(self):
+        mw = self.translate_x(self.max_x) - self.translate_x(self.min_x)
+        self.pd = (self.width -mw)/2
+        print(self.pd)
 
     def on_resize(self,event):
         wscale = float(event.width)/self.width
@@ -173,6 +180,7 @@ class PixelDisplay(Canvas):
         #    scale = wscale
         self.config(width=self.width, height=self.height)
         #self.scale("all",0,0,scale,scale)
+        self.set_pd()
         self.scale_draw()
 
 class FlatlandsDisplay(PixelDisplay):
@@ -216,23 +224,23 @@ class FlatlandsDisplay(PixelDisplay):
                 if tile != 0:
                     self.draw_piece("Piece", j, i, tile)
                     if tile>0:
-                        self.create_text(self.translate_x(j + 0.5), self.translate_y(i + 0.5), font=("Arial",int(self.width/self.w*0.5)), text=str(tile), fill="white", tags="Piece")
+                        self.create_text(self.translate_x(j + 0.5), self.translate_y(i + 0.5), font=("Arial",int(self.width/self.w*0.4)), text=str(tile), fill="#B8DC69", tags="Piece")
 
     def draw_arrows(self, map):
         self.delete("Arrows")
         for i in range(len(map)):
             for j in range(len(map[0])):
                 tile = self._get_arrow(map[i][j])
-                self.create_text(self.translate_x(j + 0.5), self.translate_y(i + 0.5), font=("Arial",int(self.width/self.w*0.2)), text=str(tile), fill="white", tags="Piece")
+                self.create_text(self.translate_x(j + 0.5), self.translate_y(i + 0.5), font=("Arial",int(self.width/self.w*0.2)), text=str(tile), fill="#FDEA93", tags="Piece")
 
     def draw_piece(self, piece_id, x, y, piece_type):
         self.draw_rounded(x,y, 1, 1,  self._get_color(piece_type), padding=2, line=self.bg, tags=piece_id)
         #self.draw_label( x,y, 1,1, str(piece_id), t=piece_id)
 
     def _get_color(self, type):
-        c = {-2:"blue", -1:"red", -3: "orange"}
+        c = {-2:"blue", -1:"#F33803", -3: "orange"}
         if type not in c:
-            return "green"
+            return "#55A045"
         return c.get(type)
 
     def _get_arrow(self, type):

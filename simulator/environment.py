@@ -49,6 +49,7 @@ class Environment:
         self.food_left = self.food_number
         self.food = 0
         self.poison = 0
+        self.eaten = [0 for i in range(self.food_number)]
 
     def take_snapshot(self):
         return [copy.deepcopy(self.board), self.food_left]
@@ -71,13 +72,14 @@ class Environment:
         if content >= Environment.FOOD:
             self.food += 1
             self.food_left -= 1
+            self.eaten[content-1] = 1
             #TODO:Force order to find bug
-            reward = 4
+            reward = 2
         elif content == Environment.POISON:
             self.poison += 1
-            reward = -3
+            reward = -2
         elif content == Environment.GOAL:
-            reward = 4
+            reward = 2
         return reward
 
     def _move_agent(self, action):
@@ -100,7 +102,10 @@ class Environment:
         self.board[y][x] = Environment.PLAYER
         return content
 
-
+    def food_state(self):
+        #TODO:Implement switch
+        #return str(self.food)
+        return str(self.eaten)
     def __repr__(self):
         return str(self.board)
 
