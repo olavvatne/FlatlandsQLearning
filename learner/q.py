@@ -2,6 +2,8 @@ __author__ = 'Olav'
 import itertools
 import numpy as np
 import random
+from collections import deque
+
 class QLearning:
     LEARNING_RATE = 0.24
     DISCOUNT_FACTOR = 0.9
@@ -15,7 +17,6 @@ class QLearning:
         self.learning_rate = l
         self.eligibility_trace = e
         self.max_tail = 6
-        self.listner = None
         self.stopped = False
         self.q = {}
         self.e = {}
@@ -74,16 +75,14 @@ class QLearning:
         return snapshot
 
     def _create_tail(self):
-        self.visited = []
+        self.visited = deque([])
 
     def _add_tail(self, s, a):
+        self.visited.appendleft((s, a))
         if len(self.visited) > self.max_tail:
-            self.visited.sort(key=lambda k: self.e[k[0]][k[1]], reverse=True)
-            #print("------------------------")
-            #print([self.e[t][p] for t,p in self.visited])
             ds, da = self.visited.pop()
+            #TODO: When looping this will set propagation to zero!
             self.e[ds][da] = 0
-        self.visited.append((s,a))
 
     def _create_action_map(self, board, n):
         map = []
@@ -122,7 +121,7 @@ class QLearning:
                     probs = [a/s for a in probs]
                 else:
                     probs = [1/len(actions) for i in actions]
-                return np.random.choice(list(range(4)), size=1, p=probs)
+                return np.random.choice([0,1,2,3], size=1, p=probs)
 
     def get_state(self, x,y,n):
         s = str(x)+","+str(y)+ ","+ str(n)

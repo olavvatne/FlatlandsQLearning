@@ -51,6 +51,7 @@ class Environment:
         self.food = 0
         self.poison = 0
         self.eaten = [0 for i in range(self.food_number)]
+        self.eaten_str = str(self.eaten)
 
     def take_snapshot(self):
         return [copy.deepcopy(self.board), self.food_left]
@@ -74,6 +75,7 @@ class Environment:
             self.food += 1
             self.food_left -= 1
             self.eaten[content-1] = 1
+            self.eaten_str = str(self.eaten)
             #TODO:Force order to find bug
             reward = 2
         elif content == Environment.POISON:
@@ -107,7 +109,7 @@ class Environment:
         if self.simple:
             return str(self.food)
         else:
-            return str(self.eaten)
+            return self.eaten_str
 
     def __repr__(self):
         return str(self.board)
