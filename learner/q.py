@@ -95,9 +95,12 @@ class QLearning:
         return map
 
     def _update_Q(self, s,ns, a, r):
-        d = r + (self.discount_factor*max(self.q[ns])) - self.q[s][a]
+        q = self.q
+        e = self.e
+        learn = self.learning_rate
+        d = r + (self.discount_factor*max(q[ns])) - q[s][a]
         for k, i in self.visited:
-            self.q[k][i] += self.learning_rate*d*self.e[k][i]
+            q[k][i] += learn*d*e[k][i]
 
     def _get_best_action(self,s ):
         return max(list(enumerate(self.q[s])), key=lambda k: k[1])[0]
@@ -132,9 +135,12 @@ class QLearning:
         return self.q[s][a]
 
     def _update_E(self, s, a):
+        e = self.e
+        dis = self.discount_factor
+        eli = self.eligibility_trace
         for si, ai in self.visited:
-            self.e[si][ai] = self.discount_factor*self.eligibility_trace*self.e[si][ai]
-        self.e[s][a] += 1
+            e[si][ai] = dis*eli*e[si][ai]
+        e[s][a] += 1
 
     def set_listener(self, listner):
         self.listener = listner

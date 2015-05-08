@@ -80,9 +80,9 @@ class Environment:
             reward = 2
         elif content == Environment.POISON:
             self.poison += 1
-            reward = -2
+            reward = -1
         elif content == Environment.GOAL:
-            reward = 2
+            reward = 1
         return reward
 
     def _move_agent(self, action):
