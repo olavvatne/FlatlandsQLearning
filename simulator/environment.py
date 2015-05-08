@@ -138,6 +138,9 @@ class Environment:
         self.steps += 1
         return content
 
+    def get_environment_state(self):
+        return str(self.agent_x)+","+str(self.agent_y)+ ","+ str(self.food_state())
+
     def food_state(self):
         '''
         For simple mode , the order of the food eaten does not matter

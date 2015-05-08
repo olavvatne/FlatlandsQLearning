@@ -46,10 +46,10 @@ class QLearning:
                 self.listener.update(i)
             print("ITERATION", i)
             while not scenario.is_goal() and not self.stopped:
-                s = self.get_state(scenario.agent_x, scenario.agent_y, scenario.food_state())
+                s = self.get_state(scenario)
                 a = self._select_action(s)
                 r = scenario.update(a)
-                new_s = self.get_state(scenario.agent_x, scenario.agent_y, scenario.food_state())
+                new_s = self.get_state(scenario)
                 self._add_tail(s,a)
                 self._update_E(s, a)
                 self._update_Q(s,new_s, a,r)
@@ -82,7 +82,7 @@ class QLearning:
         max_steps = scenario.width*scenario.height*4
         for i in range(max_steps):
             recording.append(self._gui_snapshot(scenario))
-            s = self.get_state(scenario.agent_x, scenario.agent_y, scenario.food_state())
+            s = self.get_state(scenario)
             a = self._select_action(s, test=True)
             r = scenario.update(a)
             if scenario.is_goal():
@@ -137,7 +137,8 @@ class QLearning:
         for i in range(len(board)):
             row = []
             for j in range(len(board[0])):
-                s = self.get_state(j, i, n)
+                s = str(j)+","+str(i)+ ","+ str(n)
+                self._check(s)
                 row.append(self._select_action(s, test=True))
             map.append(row)
         return map
@@ -195,13 +196,13 @@ class QLearning:
         '''
         return v + (random.random() * r) - (0.5*r)
 
-    def get_state(self, x,y,n):
+    def get_state(self, scenario):
         '''
         Each state for the flatlands scenario consists of a x ,y and n value.
         Specifically for flatlands, means agent position and a ordered bit pattern of
         food eaten this far.
         '''
-        s = str(x)+","+str(y)+ ","+ str(n)
+        s = scenario.get_environment_state()
         self._check(s)
         return s
 
