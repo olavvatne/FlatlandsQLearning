@@ -15,6 +15,7 @@ class QLearning:
             self.listener = listener
         self.discount_factor = d
         self.learning_rate = l
+        self.epsilon = 0.1
         self.eligibility_trace = e
         self.max_tail = 6
         self.stopped = False
@@ -31,7 +32,6 @@ class QLearning:
 
     def learn(self, scenario, k=100):
         self.stopped = False
-        sss = []
         self._create_EQ(scenario)
         for i in range(k):
             scenario.restart()
@@ -43,14 +43,13 @@ class QLearning:
             while not scenario.is_goal() and not self.stopped:
                 s = self.get_state(scenario.agent_x, scenario.agent_y, scenario.food_state())
                 a = self._select_action(s)
-                if self.t == 0:
-                    sss.append(a)
                 r = scenario.update(a)
                 new_s = self.get_state(scenario.agent_x, scenario.agent_y, scenario.food_state())
                 self._add_tail(s,a)
                 self._update_E(s, a)
                 self._update_Q(s,new_s, a,r)
-        print(sss)
+            print("steps",scenario.steps)
+
     def _check(self, s):
         if s not in self.q:
             self.q[s] = [0,0,0,0]
@@ -59,21 +58,15 @@ class QLearning:
     def test(self, scenario):
         scenario.restart()
         recording = []
-        sss = []
         #Only best actions
-        self.t = 0
-        max_steps = scenario.width*scenario.height
+        max_steps = scenario.width*scenario.height*4
         for i in range(max_steps):
-            #TODO: Not show arrow for unvisited states
             recording.append(self._gui_snapshot(scenario))
             s = self.get_state(scenario.agent_x, scenario.agent_y, scenario.food_state())
-            a = self._select_action(s)
-            if self.t == 0:
-                sss.append(a)
+            a = self._select_action(s, test=True)
             r = scenario.update(a)
             if scenario.is_goal():
                 break
-        print(sss)
         recording.append(self._gui_snapshot(scenario))
         return recording
 
@@ -89,8 +82,17 @@ class QLearning:
         self.visited.appendleft((s, a))
         if len(self.visited) > self.max_tail:
             ds, da = self.visited.pop()
+
+
+            #Should not reset self.e if other instance of state in visited
+            loop = False
+            for ts, ta in self.visited:
+                if ts==ds and ta==da:
+                    loop = True
+                    break
             #TODO: When looping this will set propagation to zero!
-            self.e[ds][da] = 0
+            if not loop:
+                self.e[ds][da] = 0
 
     def _create_action_map(self, board, n):
         map = []
@@ -98,7 +100,7 @@ class QLearning:
             row = []
             for j in range(len(board[0])):
                 s = self.get_state(j, i, n)
-                row.append(self._select_action(s))
+                row.append(self._select_action(s, test=True))
             map.append(row)
         return map
 
@@ -110,31 +112,31 @@ class QLearning:
         for k, i in self.visited:
             q[k][i] += learn*d*e[k][i]
 
-    #def _get_best_action(self,s ):
-    #    actions = self.q[s]
-    #    return max(enumerate(actions), key=lambda k: k[1])[0]
+    def _select_action(self, s, test=False):
+        q = self.q[s]
+        nr_actions = len(q)
+        if test:
+            return max(enumerate(q), key=lambda k: k[1])[0]
+        maxQ = max(q)
 
-    def _select_action(self, s):
-        if random.random() < self.t:
-            return random.choice(list(range(4)))
+        #Exploration. Agent explore a lot in the start, over time t,
+        #this exploration will be reduced
+        if random.random() < self.t+self.epsilon:
+            minQ = min(q)
+            mag = max(abs(minQ), abs(maxQ))
+            q = [q[i] + random.random() * mag -+.5*mag for i in range(nr_actions)]
+            maxQ = max(q)
+
+        count = q.count(maxQ)
+        if count > 1:
+            #Random action if Q values does not discriminate
+            best = [i for i in range(nr_actions) if q[i] == maxQ]
+            i = random.choice(best)
         else:
-            actions = self.q[s]
-            #TODO: FIX selection action. Above good enough
+            #Return best action
+            i = q.index(maxQ)
+        return i
 
-            if random.random() < (1-self.t):
-
-                return max(enumerate(actions), key=lambda k: k[1])[0]
-            else:
-                m = abs(min(actions))
-                #TODO: make prob more even at first, since they are , simulated annealing combined
-                #TODO: maybe?
-                probs = [a+m for a in actions]
-                s = sum(probs)
-                if s>0:
-                    probs = [a/s for a in probs]
-                else:
-                    probs = [1/len(actions) for i in actions]
-                return np.random.choice([0,1,2,3], size=1, p=probs)
 
     def get_state(self, x,y,n):
         s = str(x)+","+str(y)+ ","+ str(n)

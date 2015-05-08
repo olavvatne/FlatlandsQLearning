@@ -78,7 +78,7 @@ class AppUI(Frame):
         self.canvas.grid(row=2, column=0,columnspan=4, sticky=N+S+E+W ,padx=4, pady=4)
 
         self.v = StringVar()
-        speed_adjuster = Scale(self, from_=50, to=1000, command=self.set_speed,orient=HORIZONTAL, variable=self.v)
+        speed_adjuster = Scale(self, from_=10, to=1000, command=self.set_speed,orient=HORIZONTAL, variable=self.v)
         speed_adjuster.set(400)
         speed_adjuster.grid(row=3, column=0,padx=2, pady=1)
 

@@ -66,25 +66,18 @@ class Environment:
         return reward
 
     def is_goal(self):
-        #if self.food_left == 0 and self.agent_x == self.bc_x and self.agent_y == self.bc_y:
-        #    print("--------------------------")
-        #    print(self.food_left)
-        #    print(self.food_number)
-        #    print(self.agent_x)
-        #    print(self.agent_y)
         return self.food_left == 0 and self.agent_x == self.bc_x and self.agent_y == self.bc_y
 
     def _generate_reward(self):
         self.board[self.bc_y][self.bc_x] = Environment.GOAL
 
     def _reward(self, content):
-        reward = -0.02
+        reward = -0.01
         if content >= Environment.FOOD:
             self.food += 1
             self.food_left -= 1
             self.eaten[content-1] = 1
             self.eaten_str = str(self.eaten)
-            #TODO:Force order to find bug
             reward = 2
         elif content == Environment.POISON:
             self.poison += 1
