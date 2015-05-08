@@ -208,10 +208,11 @@ class FlatlandsDisplay(PixelDisplay):
     def draw_model(self, timeslice):
         #TODO: fix
         if timeslice:
-            b, f, m = timeslice
+            b, f, s, m = timeslice
             self.draw_pieces(b)
             self.draw_arrows(m)
-            self.create_text(20, 20, font=("Arial",20), text=str(f), fill="white", tags="Piece")
+            self.create_text(50, 20, font=("Arial",20), text="FL: " +str(f), fill="white", tags="Piece")
+            self.create_text(150, 20, font=("Arial",20), text="S: " +str(s), fill="white", tags="Piece")
 
     def scale_draw(self):
         self.draw_board()

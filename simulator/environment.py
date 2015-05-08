@@ -22,6 +22,7 @@ class Environment:
         self.recording = []
         self.poison = 0
         self.food = 0
+        self.steps = 0
         self.simple = False
 
     def create_environment(self, file):
@@ -50,11 +51,12 @@ class Environment:
         self.food_left = self.food_number
         self.food = 0
         self.poison = 0
+        self.steps = 0
         self.eaten = [0 for i in range(self.food_number)]
         self.eaten_str = str(self.eaten)
 
     def take_snapshot(self):
-        return [copy.deepcopy(self.board), self.food_left]
+        return [copy.deepcopy(self.board), self.food_left, self.steps]
 
     def update(self, action):
         content = self._move_agent(action)
@@ -64,13 +66,19 @@ class Environment:
         return reward
 
     def is_goal(self):
+        #if self.food_left == 0 and self.agent_x == self.bc_x and self.agent_y == self.bc_y:
+        #    print("--------------------------")
+        #    print(self.food_left)
+        #    print(self.food_number)
+        #    print(self.agent_x)
+        #    print(self.agent_y)
         return self.food_left == 0 and self.agent_x == self.bc_x and self.agent_y == self.bc_y
 
     def _generate_reward(self):
         self.board[self.bc_y][self.bc_x] = Environment.GOAL
 
     def _reward(self, content):
-        reward = -0.01
+        reward = -0.02
         if content >= Environment.FOOD:
             self.food += 1
             self.food_left -= 1
@@ -103,7 +111,17 @@ class Environment:
         self.agent_y = y
         content = self.board[y][x]
         self.board[y][x] = Environment.PLAYER
+        self.steps += 1
         return content
+
+    #TODO: maybe use
+    def percepts(self, x, y):
+        b = self.board
+        n = (y-1)%self.height
+        e =  (x+1)%self.width
+        s = (y+1)%self.height
+        w = (x-1)%self.width
+        return [b[n][x]/10, b[y][e]/10, b[s][x]/10, b[y][w]/10]
 
     def food_state(self):
         if self.simple:

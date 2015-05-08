@@ -31,23 +31,26 @@ class QLearning:
 
     def learn(self, scenario, k=100):
         self.stopped = False
+        sss = []
         self._create_EQ(scenario)
         for i in range(k):
             scenario.restart()
             self._create_tail()
-            self.t = 1  - (i/k)
+            self.t = 1  - ((i+1)/k)
             if self.listener:
                 self.listener.update(i)
             print("ITERATION", i)
             while not scenario.is_goal() and not self.stopped:
                 s = self.get_state(scenario.agent_x, scenario.agent_y, scenario.food_state())
                 a = self._select_action(s)
+                if self.t == 0:
+                    sss.append(a)
                 r = scenario.update(a)
                 new_s = self.get_state(scenario.agent_x, scenario.agent_y, scenario.food_state())
                 self._add_tail(s,a)
                 self._update_E(s, a)
                 self._update_Q(s,new_s, a,r)
-
+        print(sss)
     def _check(self, s):
         if s not in self.q:
             self.q[s] = [0,0,0,0]
@@ -56,16 +59,21 @@ class QLearning:
     def test(self, scenario):
         scenario.restart()
         recording = []
+        sss = []
+        #Only best actions
+        self.t = 0
         max_steps = scenario.width*scenario.height
         for i in range(max_steps):
             #TODO: Not show arrow for unvisited states
             recording.append(self._gui_snapshot(scenario))
             s = self.get_state(scenario.agent_x, scenario.agent_y, scenario.food_state())
-            a = self._get_best_action(s)
+            a = self._select_action(s)
+            if self.t == 0:
+                sss.append(a)
             r = scenario.update(a)
             if scenario.is_goal():
                 break
-
+        print(sss)
         recording.append(self._gui_snapshot(scenario))
         return recording
 
@@ -90,7 +98,7 @@ class QLearning:
             row = []
             for j in range(len(board[0])):
                 s = self.get_state(j, i, n)
-                row.append(self._get_best_action(s))
+                row.append(self._select_action(s))
             map.append(row)
         return map
 
@@ -102,8 +110,9 @@ class QLearning:
         for k, i in self.visited:
             q[k][i] += learn*d*e[k][i]
 
-    def _get_best_action(self,s ):
-        return max(list(enumerate(self.q[s])), key=lambda k: k[1])[0]
+    #def _get_best_action(self,s ):
+    #    actions = self.q[s]
+    #    return max(enumerate(actions), key=lambda k: k[1])[0]
 
     def _select_action(self, s):
         if random.random() < self.t:
@@ -112,7 +121,8 @@ class QLearning:
             actions = self.q[s]
             #TODO: FIX selection action. Above good enough
 
-            if random.random() < 0.1+self.t:
+            if random.random() < (1-self.t):
+
                 return max(enumerate(actions), key=lambda k: k[1])[0]
             else:
                 m = abs(min(actions))
