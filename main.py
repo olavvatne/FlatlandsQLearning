@@ -34,7 +34,8 @@ class AppUI(Frame):
         master.bind("<Control-r>", lambda event: run_pressed())
         menu.add_command(label="Stop", command=lambda: stop_pressed(), accelerator="Ctrl+S")
         master.bind("<Control-s>", lambda event: stop_pressed())
-
+        self.simple = BooleanVar()
+        menu.add_checkbutton(label="Simple mode", onvalue=1, offvalue=False, variable=self.simple)
 
         def run_pressed():
             run()
@@ -117,10 +118,12 @@ def stop(*args):
 
 def run(*args):
     stop()
+    scenario = app.canvas.model
+    scenario.simple = app.simple.get()
+    q.config(app.learning_rate.get(), app.discount.get(), app.eligibility.get())
     app.set_starttime()
     def callback():
-        q.config(app.learning_rate.get(), app.discount.get(), app.eligibility.get())
-        q.learn(app.canvas.model, k=app.iteration_entry.get())
+        q.learn(scenario, k=app.iteration_entry.get())
         recording = q.test(app.canvas.model)
         app.recording = recording
         app.canvas.set_queue(recording)

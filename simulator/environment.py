@@ -22,6 +22,7 @@ class Environment:
         self.recording = []
         self.poison = 0
         self.food = 0
+        self.simple = False
 
     def create_environment(self, file):
         f = open(file, "r")
@@ -103,9 +104,11 @@ class Environment:
         return content
 
     def food_state(self):
-        #TODO:Implement switch
-        #return str(self.food)
-        return str(self.eaten)
+        if self.simple:
+            return str(self.food)
+        else:
+            return str(self.eaten)
+
     def __repr__(self):
         return str(self.board)
 
