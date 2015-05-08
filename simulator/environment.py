@@ -26,6 +26,9 @@ class Environment:
         self.simple = False
 
     def create_environment(self, file):
+        '''
+        Creates an environment from a file.
+        '''
         f = open(file, "r")
         board_description = [int(v) for v in f.readline().split()]
         w, h, x,y,n = board_description
@@ -56,9 +59,18 @@ class Environment:
         self.eaten_str = str(self.eaten)
 
     def take_snapshot(self):
+        '''
+        For visualization purposes. A snapshot of the current board
+        state is taken, includes the board, food items left and number
+        of steps taken by the agent.
+        '''
         return [copy.deepcopy(self.board), self.food_left, self.steps]
 
     def update(self, action):
+        '''
+        The update method takes an action, implement it on the environment,
+        collect reward or punishments and return the reward to the q-learner.
+        '''
         content = self._move_agent(action)
         reward = self._reward(content)
         if self.food_left == 0:
@@ -66,12 +78,25 @@ class Environment:
         return reward
 
     def is_goal(self):
+        '''
+        If the agent has collected all the food and returned to its starting
+        position it has reached it's goal.
+        '''
         return self.food_left == 0 and self.agent_x == self.bc_x and self.agent_y == self.bc_y
 
     def _generate_reward(self):
+        '''
+        A reward is placed onto the board when the agent has consumed all food
+        on the board.
+        '''
         self.board[self.bc_y][self.bc_x] = Environment.GOAL
 
     def _reward(self, content):
+        '''
+        The environment gives out rewards or punishments using this method.
+        Poison : -1.5, food: 1, step: -0.01.
+
+        '''
         reward = -0.01
         if content >= Environment.FOOD:
             self.food += 1
@@ -81,12 +106,18 @@ class Environment:
             reward = 2
         elif content == Environment.POISON:
             self.poison += 1
-            reward = -1
+            reward = -1.5
         elif content == Environment.GOAL:
             reward = 1
         return reward
 
     def _move_agent(self, action):
+        '''
+        Move agent method implement an action on the board. An agent can go
+        left right up and down. The environment also has wrap around.
+        The content of the cell the agent's currently in will be returned.
+        This can be an empty cell, food cell or poison cell.
+        '''
         x = self.agent_x
         y = self.agent_y
 
@@ -107,16 +138,11 @@ class Environment:
         self.steps += 1
         return content
 
-    #TODO: maybe use
-    def percepts(self, x, y):
-        b = self.board
-        n = (y-1)%self.height
-        e =  (x+1)%self.width
-        s = (y+1)%self.height
-        w = (x-1)%self.width
-        return [b[n][x]/10, b[y][e]/10, b[s][x]/10, b[y][w]/10]
-
     def food_state(self):
+        '''
+        For simple mode , the order of the food eaten does not matter
+        for the state.
+        '''
         if self.simple:
             return str(self.food)
         else:
