@@ -76,6 +76,14 @@ class AppUI(Frame):
         self.canvas = FlatlandsDisplay(self)
         self.canvas.grid(row=2, column=0,columnspan=4, sticky=N+S+E+W ,padx=4, pady=4)
 
+        self.v = StringVar()
+        speed_adjuster = Scale(self, from_=200, to=1000, command=self.set_speed,orient=HORIZONTAL, variable=self.v)
+        speed_adjuster.set(400)
+        speed_adjuster.grid(row=3, column=0,padx=2, pady=1)
+
+        restart_button = Button(self, text="Restart", command=self.reset)
+        restart_button.grid(row=3, column=1,padx=2, pady=1)
+
         #Layout behavior
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
@@ -88,6 +96,14 @@ class AppUI(Frame):
 
     def set_starttime(self):
         self.starttime = datetime.now()
+
+    def set_speed(self, *args):
+        self.canvas.set_rate(int(self.v.get()))
+
+    def reset(self):
+        self.canvas.stop()
+        self.canvas.set_queue(self.recording)
+        self.canvas.start()
 
     def update(self, i):
         elapsed = datetime.now() - self.starttime
@@ -106,6 +122,7 @@ def run(*args):
         q.config(app.learning_rate.get(), app.discount.get(), app.eligibility.get())
         q.learn(app.canvas.model, k=app.iteration_entry.get())
         recording = q.test(app.canvas.model)
+        app.recording = recording
         app.canvas.set_queue(recording)
         app.canvas.start()
     t = threading.Thread(target=callback)
