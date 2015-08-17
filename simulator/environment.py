@@ -64,7 +64,7 @@ class Environment:
         state is taken, includes the board, food items left and number
         of steps taken by the agent.
         '''
-        return [copy.deepcopy(self.board), self.food_left, self.steps]
+        return [copy.deepcopy(self.board), self.poison, self.steps]
 
     def update(self, action):
         '''

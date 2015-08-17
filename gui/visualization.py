@@ -211,7 +211,7 @@ class FlatlandsDisplay(PixelDisplay):
             b, f, s, m = timeslice
             self.draw_pieces(b)
             self.draw_arrows(m)
-            self.create_text(50, 20, font=("Arial",20), text="FL: " +str(f), fill="white", tags="Piece")
+            self.create_text(50, 20, font=("Arial",20), text="P: " +str(f), fill="white", tags="Piece")
             self.create_text(150, 20, font=("Arial",20), text="S: " +str(s), fill="white", tags="Piece")
 
     def scale_draw(self):
